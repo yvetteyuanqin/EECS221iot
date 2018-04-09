@@ -1,0 +1,21 @@
+#include <ESP8266WiFi.h> 
+void setup() {
+  Serial.begin(115200);
+  Serial.println();
+  //WiFi.begin("network-name", "pass-to-network"); 
+  WiFi.begin("31B206", "4CE262W301D6E"); 
+  
+  Serial.print("Connecting");
+  while (WiFi.status() != WL_CONNECTED) { 
+    delay(500);
+    Serial.print("."); 
+   }
+  Serial.println(); 
+  Serial.print("Connected, IP address: "); 
+  Serial.println(WiFi.localIP()); 
+  Serial.print("Connected, MAC address: "); 
+  Serial.println(WiFi.macAddress()); 
+  }
+  
+void loop( ) { 
+  }
