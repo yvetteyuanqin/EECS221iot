@@ -31,22 +31,22 @@ void loop() {
     while(1){
       int sensorValue = 0;  // variable to store the value coming from the sensor
       sensorValue=analogRead(SENSOR_PIN);
-      sensorValue = 100 - ((sensorValue-MIN)*100/(MAX-MIN));//NORMALIZE
+//      sensorValue = 100 - ((sensorValue-MIN)*100/(MAX-MIN));//NORMALIZE
       Serial.print("SensorValue:");
       Serial.println(sensorValue);
-    if(sensorValue>95){
+    if(sensorValue<=400){
         digitalWrite(ledPin1, HIGH);   // turn the LED on (HIGH is the voltage level)
         digitalWrite(ledPin2, HIGH);
         digitalWrite(ledPin3, HIGH);
         digitalWrite(LED_BUILTIN, LOW);
       }
-      else if( 80<sensorValue<=95){
+     else if(400<sensorValue&&sensorValue<=600){
         digitalWrite(ledPin1, HIGH);   // turn the LED on (HIGH is the voltage level)
         digitalWrite(ledPin2, HIGH);
         digitalWrite(ledPin3, LOW);
         digitalWrite(LED_BUILTIN, HIGH);
         }
-      else if(50<sensorValue<=80){
+      else if(600<sensorValue&&sensorValue<=950){
         digitalWrite(ledPin1, HIGH);   // turn the LED on (HIGH is the voltage level)
         digitalWrite(ledPin2, LOW);
         digitalWrite(ledPin3, LOW);
@@ -65,7 +65,9 @@ void loop() {
         }
     }
 //part2
+Serial.println("ENTER SECOND PART");
 while(1){
+  
     int sensorValue = 0;  // variable to store the value coming from the sensor
     sensorValue=analogRead(SENSOR_PIN);
     for(int i = 0;i<5;i++){
@@ -76,19 +78,19 @@ while(1){
     
       Serial.print("SensorValue:");
       Serial.println(sensorValue);
-    if(sensorValue>95){
+     if(sensorValue<=400){
         digitalWrite(ledPin1, HIGH);   // turn the LED on (HIGH is the voltage level)
         digitalWrite(ledPin2, HIGH);
         digitalWrite(ledPin3, HIGH);
         digitalWrite(LED_BUILTIN, LOW);
       }
-      else if( 80<sensorValue<=95){
+     else if(400<sensorValue&&sensorValue<=600){
         digitalWrite(ledPin1, HIGH);   // turn the LED on (HIGH is the voltage level)
         digitalWrite(ledPin2, HIGH);
         digitalWrite(ledPin3, LOW);
         digitalWrite(LED_BUILTIN, HIGH);
         }
-      else if(50<sensorValue<=80){
+      else if(600<sensorValue&&sensorValue<=950){
         digitalWrite(ledPin1, HIGH);   // turn the LED on (HIGH is the voltage level)
         digitalWrite(ledPin2, LOW);
         digitalWrite(ledPin3, LOW);
@@ -105,31 +107,38 @@ while(1){
         break;
         }
     }
-
-
-//part 3
+Serial.println("ENTER THIRD PART");
+Serial.println("0 no changes, 1 weaker, 3 stronger");
+////part 3
 while(1){
+  
     int sensorValue = 0;  // variable to store the value coming from the sensor
     sensorValue=analogRead(SENSOR_PIN);
  
       Serial.print("SensorValue:");
       Serial.println(sensorValue);
-    if(abs(presensorValue-sensorValue)<0.5){
+    if(abs(presensorValue-sensorValue)<10){
+      digitalWrite(LED_BUILTIN, HIGH);
         digitalWrite(ledPin1, LOW);   // turn the LED on (HIGH is the voltage level)
         digitalWrite(ledPin2, LOW);
         digitalWrite(ledPin3, LOW);
+        delay(400);
       }
-      else if((sensorValue-presensorValue)>0.5){
+      else if((presensorValue-sensorValue)>10){
+        digitalWrite(LED_BUILTIN, HIGH);
         digitalWrite(ledPin1, HIGH);   // turn the LED on (HIGH is the voltage level)
         digitalWrite(ledPin2, HIGH);
         digitalWrite(ledPin3, HIGH);
+        delay(400);
         }
-      else if((presensorValue-sensorValue)>0.5){
+      else if((sensorValue-presensorValue)>10){
+        digitalWrite(LED_BUILTIN, HIGH);
         digitalWrite(ledPin1, HIGH);   // turn the LED on (HIGH is the voltage level)
         digitalWrite(ledPin2, LOW);
         digitalWrite(ledPin3, LOW);
+        delay(400);
       }
-      delay(400);
+      
       presensorValue = sensorValue;
       count++;
       if(count >= 150){
