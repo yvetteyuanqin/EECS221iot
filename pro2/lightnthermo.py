@@ -15,12 +15,12 @@ base_dir = '/sys/bus/w1/devices/'
 device_folder=glob.glob(base_dir+'28*')[0]
 device_file=device_folder+'/w1_slave'
 ONBOARDLED = 18
-SELECTION = 
+SELECTION = 23
 
 def setup():
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(ONBOARDLED,GPIO.OUT)
-    GPIO.setup()
+    GPIO.setup(SELECTION,GPIO.IN)
     # Open SPI bus
     os.system('modprobe w1-gpio')
     os.system('modprobe w1-therm')
@@ -63,27 +63,38 @@ light_channel = 0
  
 # Define delay between readings
 delay = 0.5
+average=[]
 def lightnthermo():
     while True:
-        
-        # Read the light sensor data
-      light_level = ReadChannel(light_channel)
-      light_volts = ConvertVolts(light_level,2)
-     #turn on on board light if above threshold
-      GPIO.output(ONBOARDLED,GPIO.LOW)
-      if light_level<400:
-          GPIO.output(ONBOARDLED,GPIO.HIGH)
-      # Read the temperature sensor data
-      temp_c,temp_f = read_temp()
-     
-      # Print out results
-      print("--------------------------------------------")
-      print("Light: {} ".format(light_level))
-      print("Temp : {} deg C {} deg F".format(temp_c,temp_f))
-     
-      # Wait before repeating loop
-      time.sleep(delay)
-      
+      if GPIO.input(SELECTION)==1:#output light value
+          light_level = ReadChannel(light_channel)
+          light_volts = ConvertVolts(light_level,2)
+         #turn on on board light if above threshold
+          average.append(light_level)
+          if len(average)>=6:
+              average.pop(0)
+          GPIO.output(ONBOARDLED,GPIO.LOW)
+          if sum(average)/6<400:
+              GPIO.output(ONBOARDLED,GPIO.HIGH)
+          # Read the temperature sensor data
+          
+         
+          # Print out results
+          print("--------------------------------------------")
+          print("Light: {} ".format(light_level))
+          
+         
+          # Wait before repeating loop
+          time.sleep(delay)
+      else:
+          temp_c,temp_f = read_temp()
+         
+          # Print out results
+          print("--------------------------------------------")
+          print("Temp : {} deg C {} deg F".format(temp_c,temp_f))
+          time.sleep(delay)
+          
+          
 def destroy():
     GPIO.cleanup()
 
