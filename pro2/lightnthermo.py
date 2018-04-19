@@ -5,17 +5,25 @@ import os
 import RPi.GPIO as GPIO
 import Adafruit_GPIO.SPI as SPI
 import Adafruit_MCP3008
+import glob
+
 
 SPI_PORT   = 0
 SPI_DEVICE = 0
 mcp = Adafruit_MCP3008.MCP3008(spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE))
-
-ONBOARDLED = 17
+base_dir = '/sys/bus/w1/devices/'
+device_folder=glob.glob(base_dir+'28*')[0]
+device_file=device_folder+'/w1_slave'
+ONBOARDLED = 18
+SELECTION = 
 
 def setup():
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(ONBOARDLED,GPIO.OUT)
+    GPIO.setup()
     # Open SPI bus
+    os.system('modprobe w1-gpio')
+    os.system('modprobe w1-therm')
     
  
 # Function to read SPI data from MCP3008 chip
@@ -23,7 +31,6 @@ def setup():
 def ReadChannel(channel):
   data = mcp.read_adc(channel)
   #data = ((adc[1]&3) << 8) + adc[2]
-  print(data)
   return data
  
 # Function to convert data to voltage level,
@@ -34,28 +41,25 @@ def ConvertVolts(data,places):
   return volts
  
 # Function to calculate temperature from
-# TMP36 data, rounded to specified
-# number of decimal places.
-def ConvertTemp(data,places):
- 
-  # ADC Value
-  # (approx)  Temp  Volts
-  #    0      -50    0.00
-  #   78      -25    0.25
-  #  155        0    0.50
-  #  233       25    0.75
-  #  310       50    1.00
-  #  465      100    1.50
-  #  775      200    2.50
-  # 1023      280    3.30
- 
-  temp = ((data * 330)/float(1023))-50
-  temp = round(temp,places)
-  return temp
- 
+def read_temp_raw():
+    f = open(device_file, 'r')
+    lines = f.readlines()
+    f.close()
+    return lines
+def read_temp():
+    lines = read_temp_raw()
+    while lines[0].strip()[-3:] != 'YES':
+        time.sleep(0.2)
+        lines = read_temp_raw()
+    equals_pos = lines[1].find('t=')
+    if equals_pos != -1:
+        temp_string = lines[1][equals_pos+2:]
+        temp_c = float(temp_string) / 1000.0
+        temp_f = temp_c * 9.0 / 5.0 + 32.0
+        return temp_c, temp_f
 # Define sensor channels
 light_channel = 0
-temp_channel  = 1
+
  
 # Define delay between readings
 delay = 0.5
@@ -67,17 +71,15 @@ def lightnthermo():
       light_volts = ConvertVolts(light_level,2)
      #turn on on board light if above threshold
       GPIO.output(ONBOARDLED,GPIO.LOW)
-      if light_level>80:
+      if light_level<400:
           GPIO.output(ONBOARDLED,GPIO.HIGH)
       # Read the temperature sensor data
-      #temp_level = ReadChannel(temp_channel)
-      #temp_volts = ConvertVolts(temp_level,2)
-      #temp       = ConvertTemp(temp_level,2)
+      temp_c,temp_f = read_temp()
      
       # Print out results
-      #print("--------------------------------------------")
-      #print("Light: {} ".format(light_level))
-      #print("Temp : {} ({}V) {} deg C".format(temp_level,temp_volts,temp))
+      print("--------------------------------------------")
+      print("Light: {} ".format(light_level))
+      print("Temp : {} deg C {} deg F".format(temp_c,temp_f))
      
       # Wait before repeating loop
       time.sleep(delay)
