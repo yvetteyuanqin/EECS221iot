@@ -6,6 +6,8 @@ import RPi.GPIO as GPIO
 import Adafruit_GPIO.SPI as SPI
 import Adafruit_MCP3008
 import glob
+import requests
+
 
 
 SPI_PORT   = 0
@@ -16,6 +18,13 @@ device_folder=glob.glob(base_dir+'28*')[0]
 device_file=device_folder+'/w1_slave'
 ONBOARDLED = 18
 SELECTION = 23
+api_address='http://api.openweathermap.org/data/2.5/weather?appid=b873cb1bc0a4e889d470d788d29748ba&id='
+city_id = '5128638'#id of New York
+info_url = api_address+city_id
+json_data=requests.get(info_url).json()
+temp_info=json_data['main']['temp']
+done=0
+
 
 def setup():
     GPIO.setmode(GPIO.BCM)
@@ -47,6 +56,7 @@ def read_temp_raw():
     f.close()
     return lines
 def read_temp():
+    
     lines = read_temp_raw()
     while lines[0].strip()[-3:] != 'YES':
         time.sleep(0.2)
@@ -88,10 +98,16 @@ def lightnthermo():
           time.sleep(delay)
       else:
           temp_c,temp_f = read_temp()
-         
-          # Print out results
           print("--------------------------------------------")
-          print("Temp : {} deg C {} deg F".format(temp_c,temp_f))
+          print('Current temperature in NewYork: ',temp_info,'K',round(temp_info-273,2),'deg C')
+          print("Environment Temp : {} deg C {} deg F".format(temp_c,temp_f))
+          # Print out results
+          
+
+          if temp_c>temp_info-273:
+              GPIO.output(ONBOARDLED,GPIO.HIGH)
+              print('Temperature is higher here.')
+          
           time.sleep(delay)
           
           
