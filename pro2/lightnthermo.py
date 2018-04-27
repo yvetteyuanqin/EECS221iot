@@ -107,6 +107,8 @@ def lightnthermo():
           if temp_c>temp_info-273:
               GPIO.output(ONBOARDLED,GPIO.HIGH)
               print('Temperature is higher here.')
+          else:
+              print('Temperature lower here.')
           
           time.sleep(delay)
           
