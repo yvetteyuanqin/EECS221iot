@@ -69,7 +69,7 @@ void setup() {
 
   WiFi.begin(WLAN_SSID, WLAN_PASS);
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+    delay(50);
     Serial.print(".");
   }
   Serial.println();
@@ -94,7 +94,7 @@ void loop() {
   Serial.println(pot_value,DEC); // print reading in DECIMAL
   pot_stream.publish(pot_value); // publish to Raspberry Pi under topic "/esp/pot88"
   
-
+  delay(100);//for publish
   //Subscribe ,get command
   Adafruit_MQTT_Subscribe *subscription; 
  while ((subscription = mqtt.readSubscription())) { 
