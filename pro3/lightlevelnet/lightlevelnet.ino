@@ -1,6 +1,7 @@
-
+#include <CircularBuffer.h>
 #define MIN 0
 #define MAX 1000
+#define MAXCOUNT 10
 
 #define SENSOR_PIN A0
 
@@ -12,13 +13,14 @@
 #define LED_PIN D6
 #define pot A0 // define our potentiometer at pin0 which is the ADC for the ESP8266 board (the only ADC pin available)
 /************************* WiFi Access Point *********************************/
-
-#define WLAN_SSID       "31B206" 
-#define WLAN_PASS       "4CE262W301D6E" 
-
+//
+//#define WLAN_SSID       "31B206" 
+//#define WLAN_PASS       "4CE262W301D6E" 
+#define WLAN_SSID       "Yuan" 
+#define WLAN_PASS       "11111111"
 /************************* Adafruit.io Setup *********************************/
 
-#define MQTT_SERVER      "192.168.0.13" // change this to your Pi IP_address
+#define MQTT_SERVER      "172.20.10.2" // change this to your Pi IP_address
 #define MQTT_SERVERPORT  1883                   // use 8883 for SSL
 #define MQTT_USERNAME    "" // empty
 #define MQTT_KEY         "" // empty
@@ -27,6 +29,7 @@
 
 // Create an ESP8266 WiFiClient class to connect to the MQTT server.
 WiFiClient client;
+CircularBuffer<int, MAXCOUNT> sensedArray;
 // or... use WiFiFlientSecure for SSL
 //WiFiClientSecure client;
 
@@ -184,24 +187,36 @@ void loop() {
       if (currentMillis - previousMillis2 >= interval2) {   //interval2=1 sec
             previousMillis2 = currentMillis;
             sensorValue=analogRead(SENSOR_PIN);
-            Serial.print("SensorValue:");
-            Serial.println(sensorValue);
-            count++;
-            total+=sensorValue;
-            if(count>=10){
-              average =total/10 ;
-              Serial.print("Average of past ten seconds:");
-              Serial.println(average);
-              count = 0;
-              total = 0;
-
+            if(count<MAXCOUNT){          
+              count++;
+              total+=sensorValue/MAXCOUNT;
+              sensedArray.unshift(sensorValue);
+              for (int i=0;i<sensedArray.size();i++){
+                Serial.print(sensedArray[i]);
+                Serial.print("\t");    // prints a tab
+                }
+              Serial.println();
+              }
+            else{
+              int temp=sensedArray.pop();
+              total-= temp/MAXCOUNT;
+              total+=sensorValue/MAXCOUNT;
+              sensedArray.unshift(sensorValue);
+              for (int i=0;i<sensedArray.size();i++){
+                Serial.print(sensedArray[i]);
+                Serial.print("\t");    // prints a tab
+                }
+              Serial.print("Average of pasat ten seconds:");
+              Serial.println(total);
+              }
+              average=total;
             }
             
             
       
      
   }
-}// Function to connect and reconnect as necessary to the MQTT server.
+// Function to connect and reconnect as necessary to the MQTT server.
 // Should be called in the loop function and it will take care if connecting.
 void MQTT_connect() {
   int8_t ret;
