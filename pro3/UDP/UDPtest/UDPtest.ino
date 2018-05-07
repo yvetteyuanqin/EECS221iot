@@ -35,7 +35,9 @@ void setup()
     }
   Serial.println();
   Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
-  
+  Udp.beginPacket("172.20.10.2", localUdpPort);
+    Udp.write("Please receive  my address");
+    Udp.endPacket();
  
 }
 
