@@ -2,8 +2,10 @@
 #include <WiFiUdp.h>
 
 
-char ssid[] = "UCInet Mobile Access";  //  your network SSID (name)
-//char pass[] = "xxxxxx";       // your network password
+//char ssid[] = "UCInet Mobile Access";  //  your network SSID (name)
+
+char ssid[] = "Yuan";  //  your network SSID (name)
+char pass[] = "11111111";       // your network password
 
 
 WiFiUDP Udp;
@@ -18,7 +20,7 @@ void setup()
   Serial.println();
 
   Serial.printf("Connecting to %s ", ssid);
-  WiFi.begin(ssid);
+  WiFi.begin(ssid,pass);
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(500);
