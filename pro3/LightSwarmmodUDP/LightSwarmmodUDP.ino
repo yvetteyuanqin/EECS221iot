@@ -1,3 +1,4 @@
+#include <CircularBuffer.h>
 #include <Adafruit_TCS34725.h>
 
 /*
@@ -10,7 +11,8 @@ SwitchDoc Labs, August 2015
 #include <WiFiUdp.h>
 #include <Wire.h>
 #include "Adafruit_TCS34725.h"
-
+#define ledPin1 D6
+#define MAXCOUNT 10
 #undef DEBUG
 
 char ssid[] = "Yuan"; //  your network SSID (name)
@@ -19,7 +21,7 @@ char pass[] = "11111111"; // your network password
 
 #define VERSIONNUMBER 1
 
-
+#define SENSOR_PIN A0
 
 #define LOGGERIPINC 20
 #define SWARMSIZE 1 // only one now
@@ -50,7 +52,7 @@ int swarmVersion[SWARMSIZE];
 int swarmState[SWARMSIZE];
 long swarmTimeStamp[SWARMSIZE];   // for aging
 
-IPAddress serverAddress = IPAddress(172.20.10.2); // default no IP Address
+IPAddress serverAddress = IPAddress(172,20,10,2); // default no IP Address
 
 
 int swarmAddresses[SWARMSIZE];  // Swarm addresses
@@ -69,11 +71,15 @@ int count = 0;
 int lastSecondsCount = 0;
 int val = 0;
 int lastval = 0;
-
-
+int average=0;
+int total=0;
+unsigned long previousMillis1 = 0;        // will store last time LED was updated
+unsigned long previousMillis2 = 0;        // will store last time LED was updated
+const long interval1 = 5000;           // interval at which to send and receive
+const long interval2 = 1000;         
 const int PACKET_SIZE = 14; // Light Update Packet
 const int BUFFERSIZE = 1024;
-
+CircularBuffer<int, MAXCOUNT> sensedArray;
 byte packetBuffer[BUFFERSIZE]; //buffer to hold incoming and outgoing packets
 
 // A UDP instance to let us send and receive packets over UDP
@@ -112,11 +118,11 @@ void setup()
   Serial.print(F(" "));
   Serial.println(F(__DATE__));
   Serial.println();
-  pinMode(D4, OUTPUT);
+  pinMode(D6, OUTPUT);
 
-  digitalWrite(D4, LOW);
+  digitalWrite(D6, LOW);
   delay(500);
-  digitalWrite(D4, HIGH);
+  digitalWrite(D6, HIGH);
 
   // everybody starts at 0 and changes from there
   mySwarmID = 0;
@@ -190,21 +196,124 @@ void setup()
   // Serial.println(lastSecondsCount);
 
 }
+int prevaverage=0;
+
+int sensorValue = 0;  // variable to store the value coming from the sensor
+int diff=0;
 
 void loop()
 {
+  unsigned long currentMillis = millis();
+  
+  if(diff<0){
+        digitalWrite(ledPin1, HIGH);   // turn the LED on (HIGH is the voltage level)
+        delay(100);
+        digitalWrite(ledPin1, LOW);   // turn the LED on (HIGH is the voltage level)
+        delay(100);
+        if (currentMillis - previousMillis1 >= interval1) {
+            previousMillis1 = currentMillis;
+            
+            Serial.print("New average sensor value to be sent:");
+            Serial.println(average);
+            Serial.println("Sending new average and receiving instruction......");
+            
+            //to be finished
+            //send average
+            swarmClear[mySwarmID] = average;
+            broadcastARandomUpdatePacket();
+            sendLogToServer();
+
+            Serial.println("Brighter, quicker");
+            Serial.println("-------------------------------------------");
+            diff=average-prevaverage;
+            prevaverage=average;
+            }
+        
+        
+      }else if(diff>0){
+        digitalWrite(ledPin1, HIGH);   // turn the LED on (HIGH is the voltage level)
+        delay(500);
+        digitalWrite(ledPin1, LOW);   // turn the LED on (HIGH is the voltage level)
+        delay(500);
+        if (currentMillis - previousMillis1 >= interval1) {
+            previousMillis1 = currentMillis;
+      
+            Serial.print("New average sensor value to be sent:");
+            Serial.println(average);
+            Serial.println("Sending new average and receiving instruction......");
+       
+            //to be finished
+            swarmClear[mySwarmID] = average;
+            broadcastARandomUpdatePacket();
+            sendLogToServer();
+           
+            diff=average-prevaverage;
+            
+            Serial.println("Darker, slower");
+            Serial.println("-------------------------------------------");
+            prevaverage=average;
+            }
+            
+      }
+      else {
+      
+        digitalWrite(ledPin1, HIGH);
+        delay(500);
+        if (currentMillis - previousMillis1 >= interval1) {
+          previousMillis1 = currentMillis;
+          diff=average-prevaverage;
+          prevaverage=average;
+          
+         Serial.println("Same light level");
+         Serial.println("-------------------------------------------");
+        }
+        }
+      //calculate average value of last 10 seconds
+      if (currentMillis - previousMillis2 >= interval2) {   //interval2=1 sec
+            previousMillis2 = currentMillis;
+            sensorValue=analogRead(SENSOR_PIN);
+            if(count<MAXCOUNT){          
+              count++;
+              total+=sensorValue/MAXCOUNT;
+              sensedArray.unshift(sensorValue);
+              for (int i=0;i<sensedArray.size();i++){
+                Serial.print(sensedArray[i]);
+                Serial.print("\t");    // prints a tab
+                }
+              Serial.println();
+              }
+            else{
+              int temp=sensedArray.pop();
+              total-= temp/MAXCOUNT;
+              total+=sensorValue/MAXCOUNT;
+              sensedArray.unshift(sensorValue);
+              for (int i=0;i<sensedArray.size();i++){
+                Serial.print(sensedArray[i]);
+                Serial.print("\t");    // prints a tab
+                }
+              Serial.print("Average of past ten seconds:");
+              Serial.println(total);
+              }
+              average=total;
+
+            }
+            
+            
+      }
+     
+  /*    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   int secondsCount;
   secondsCount = millis() / 10;
   if (val < lastval) {
-    digitalWrite(D4, LOW);
+    digitalWrite(D6, LOW);
     delay(100);
-    digitalWrite(D4, HIGH);
+    digitalWrite(D6, HIGH);
     delay(100);
     }
    else {
-    digitalWrite(D4, LOW);
+    digitalWrite(D6, LOW);
     delay(250);
-    digitalWrite(D4, HIGH);
+    digitalWrite(D6, HIGH);
     delay(250);
     }
   //Serial.println(val, DEC);
@@ -403,15 +512,14 @@ void loop()
   }
   Serial.println("--------");
 
-  ***/
+  
   if (count == 5) {
      broadcastARandomUpdatePacket();
      //  sendARandomUpdatePacket();
      sendLogToServer();
      count = 0;
     }
-  }
-}
+  }*/
 
 // send an LIGHT Packet request to the swarms at the given address 
 unsigned long sendLightUpdatePacket(IPAddress & address)
@@ -468,7 +576,7 @@ void broadcastARandomUpdatePacket()
 
   delay(randomDelay);
 
-  IPAddress sendSwarmAddress(192, 168, 0, 5); // my Swarm Address
+  IPAddress sendSwarmAddress(172,20,10,2); // my Swarm Address
   //IPAddress sendSwarmAddress(169, 234, 28, 120); // my Swarm Address
   sendLightUpdatePacket(sendSwarmAddress);
 
