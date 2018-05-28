@@ -27,7 +27,7 @@ def on_message(client, userdata, msg):
        newrecv=int(msg.payload)
        print("new value from PRI1 received: ", newrecv)
        #DATA PROCESSING OMITED
-       ‘’‘
+       '''
        if old !=None and old>newrecv:
            print('Brighter, send quicker instuction') 
        # Send a toggle message to the ESP8266 LED topic. 
@@ -36,8 +36,8 @@ def on_message(client, userdata, msg):
            print('Daker, send slower instuction') 
            # Send a toggle message to the ESP8266 LED topic. 
            client.publish('/leds/esp8266_81', 'SLOWER')
-       ’‘’
-    if msg.topic == '/homeauto/sensor2':
+       '''
+   if msg.topic == '/homeauto/sensor2':
         # Look at the message data and perform the appropriate action.
         #global newrecv
         newrecv=int(msg.payload)
