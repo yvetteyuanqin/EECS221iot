@@ -8,7 +8,7 @@ import RPi.GPIO as GPIO
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 from time import sleep
 from datetime import date, datetime
-newrecv=0
+#newrecv=0
 #old=None
 # Setup callback functions that are called when MQTT events happen like 
 # connecting to the server or receiving data from a subscribed feed. 
@@ -18,6 +18,7 @@ def on_connect(client, userdata, flags, rc):
    # reconnect then subscriptions will be renewed. 
    client.subscribe("/homeauto/sensor1")
    client.subscribe("/homeauto/sensor2")
+   client.subscribe("/homeauto/cam")
 
 
 # The callback for when a PUBLISH message is received from the server. 
@@ -36,7 +37,7 @@ def on_message(client, userdata, msg):
        now = datetime.utcnow()
        now_str = now.strftime('%Y-%m-%dT%H:%M:%SZ') #e.g. 2016-04-18T06:12:25.877Z
        # LUGE send back name
-       payload = '{ "Date_and_time:": "' + now_str + '","Intruder": ' + "name to be replaced" + ' }'
+       payload = '{ "Date_and_time:": "' + now_str + '","Maybe Intruder " '  + ' }'
        print (payload)
        myMQTTClient.publish("homesec/cam", payload, 0)
    if msg.topic == '/homeauto/sensor2':
@@ -47,10 +48,15 @@ def on_message(client, userdata, msg):
         now = datetime.utcnow()
         now_str = now.strftime('%Y-%m-%dT%H:%M:%SZ') #e.g. 2016-04-18T06:12:25.877Z
         # LUGE send back name
-        payload = '{ "Date_and_time:": "' + now_str + '","Intruder": ' + "name to be replaced" + ' }'
+        payload = '{ "Date_and_time:": "' + now_str + '","Maybe Intruder" ' +  ' }'
         print (payload)
         myMQTTClient.publish("homesec/cam", payload, 0)
-
+   if msg.topic == '/homeauto/cam':
+        nametoc=msg.payload
+        payload = '{ '+'Camera recognized as:'+nametoc+' }'
+        print (payload)
+        myMQTTClient.publish("homesec/cam", payload, 0)
+        
 # AWS IoT certificate based connection
 myMQTTClient = AWSIoTMQTTClient("123afhlss456")
 myMQTTClient.configureEndpoint("auf9cn18w1qbv.iot.us-east-2.amazonaws.com", 8883)
