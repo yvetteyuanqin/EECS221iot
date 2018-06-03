@@ -1,9 +1,15 @@
 
-# RPi
+# RPi mqtt
 import time 
 import paho.mqtt.client as mqtt
-#newrecv=0
-old=None
+
+# aws mqtt
+import RPi.GPIO as GPIO
+from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
+from time import sleep
+from datetime import date, datetime
+newrecv=0
+#old=None
 # Setup callback functions that are called when MQTT events happen like 
 # connecting to the server or receiving data from a subscribed feed. 
 def on_connect(client, userdata, flags, rc): 
@@ -27,23 +33,36 @@ def on_message(client, userdata, msg):
        newrecv=int(msg.payload)
        print("new value from PRI1 received: ", newrecv)
        #DATA PROCESSING OMITED
-       '''
-       if old !=None and old>newrecv:
-           print('Brighter, send quicker instuction') 
-       # Send a toggle message to the ESP8266 LED topic. 
-           client.publish('/leds/esp8266_81', 'QUICKER')
-       elif old !=None and old<=newrecv:
-           print('Daker, send slower instuction') 
-           # Send a toggle message to the ESP8266 LED topic. 
-           client.publish('/leds/esp8266_81', 'SLOWER')
-       '''
+       now = datetime.utcnow()
+       now_str = now.strftime('%Y-%m-%dT%H:%M:%SZ') #e.g. 2016-04-18T06:12:25.877Z
+       # LUGE send back name
+       payload = '{ "Date_and_time:": "' + now_str + '","Intruder": ' + "name to be replaced" + ' }'
+       print (payload)
+       myMQTTClient.publish("homesec/cam", payload, 0)
    if msg.topic == '/homeauto/sensor2':
         # Look at the message data and perform the appropriate action.
         #global newrecv
         newrecv=int(msg.payload)
         print("new value from PRI2 received: ", newrecv)
-    #old=newrecv
-           
+        now = datetime.utcnow()
+        now_str = now.strftime('%Y-%m-%dT%H:%M:%SZ') #e.g. 2016-04-18T06:12:25.877Z
+        # LUGE send back name
+        payload = '{ "Date_and_time:": "' + now_str + '","Intruder": ' + "name to be replaced" + ' }'
+        print (payload)
+        myMQTTClient.publish("homesec/cam", payload, 0)
+
+# AWS IoT certificate based connection
+myMQTTClient = AWSIoTMQTTClient("123afhlss456")
+myMQTTClient.configureEndpoint("auf9cn18w1qbv.iot.us-east-2.amazonaws.com", 8883)
+myMQTTClient.configureCredentials("/home/pi/certs/root-CA.pem", "/home/pi/certs/4b4aef80d1-private.pem.key", "/home/pi/certs/4b4aef80d1-certificate.pem.crt")
+myMQTTClient.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
+myMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
+myMQTTClient.configureConnectDisconnectTimeout(10)  # 10 sec
+myMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
+ 
+# connect and publish to  cloud
+myMQTTClient.connect()
+myMQTTClient.publish("homesec/cam", "connected", 0)
            
 # Create MQTT client and connect to localhost, i.e. the Raspberry Pi running 
 # this script and the MQTT server. 
@@ -61,7 +80,7 @@ while True:
    # Look for a change from high to low value on the button input to 
    # signal a button press. 
    time.sleep(0.001)  # Delay for about 20 milliseconds to debounce.
-
+   
    
            
 
